@@ -162,7 +162,7 @@ class Dueling(commands.Cog):
         suggested_rating = max(
             round(lowest_rating, -2) + _DUEL_RATING_DELTA, 500)
         rating = round(rating, -2) if rating else suggested_rating
-        unofficial = rating > suggested_rating
+        unofficial = False # rating > suggested_rating
         dtype = DuelType.UNOFFICIAL if unofficial else DuelType.OFFICIAL
 
         solved = {
