@@ -1,12 +1,11 @@
 import json
-import sqlite3
+import psycopg2
 
 from tle.util import codeforces_api as cf
 
-
 class CacheDbConn:
-    def __init__(self, db_file):
-        self.conn = sqlite3.connect(db_file)
+    def __init__(self, db_url):
+        self.conn = psycopg2.connect(db_url)
         self.create_tables()
 
     def create_tables(self):
@@ -75,10 +74,20 @@ class CacheDbConn:
         self.conn.execute('CREATE INDEX IF NOT EXISTS ix_problem2_contest_id '
                           'ON problem2 (contest_id)')
 
+        conn.commit()
+
     def cache_contests(self, contests):
-        query = ('INSERT OR REPLACE INTO contest '
+        query = ('INSERT INTO contest '
                  '(id, name, start_time, duration, type, phase, prepared_by) '
-                 'VALUES (?, ?, ?, ?, ?, ?, ?)')
+                 'VALUES (%s, %s, %s, %s, %s, %s, %s) '
+                 'ON CONFLICT ON CONSTRAINT (id) '
+                 'DO UPDATE SET '
+                 'name = EXCLUDED.name,'
+                 'start_time = EXCLUDED.start_time,'
+                 'duration = EXCLUDED.duration,'
+                 'type = EXCLUDED.type,'
+                 'phase = EXCLUDED.phase,'
+                 'prepared_by = EXCLUDED.prepared_by;')
         rc = self.conn.executemany(query, contests).rowcount
         self.conn.commit()
         return rc
@@ -95,9 +104,18 @@ class CacheDbConn:
                 problem.type, problem.points, problem.rating, json.dumps(problem.tags))
 
     def cache_problems(self, problems):
-        query = ('INSERT OR REPLACE INTO problem '
+        query = ('INSERT INTO problem '
                  '(contest_id, problemset_name, [index], name, type, points, rating, tags) '
-                 'VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+                 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s) '
+                 'ON CONFLICT ON CONSTRAINT (contest_id) '
+                 'DO UPDATE SET '
+                 'problemset_name = EXCLUDED.problemset_name,'
+                 '[index] = EXCLUDED.[index],'
+                 'name = EXCLUDED.name,'
+                 'type = EXCLUDED.type,'
+                 'points = EXCLUDED.points,'
+                 'rating = EXCLUDED.rating,'
+                 'tags = EXCLUDED.tags;')
         rc = self.conn.executemany(query, list(map(self._squish_tags, problems))).rowcount
         self.conn.commit()
         return rc
@@ -120,9 +138,16 @@ class CacheDbConn:
                           change.ratingUpdateTimeSeconds,
                           change.oldRating,
                           change.newRating) for change in changes]
-        query = ('INSERT OR REPLACE INTO rating_change '
+        query = ('INSERT INTO rating_change '
                  '(contest_id, handle, rank, rating_update_time, old_rating, new_rating) '
-                 'VALUES (?, ?, ?, ?, ?, ?)')
+                 'VALUES (%s, %s, %s, %s, %s, %s) '
+                 'ON CONFLICT ON CONSTRAINT (contest_id) '
+                 'DO UPDATE SET '
+                 'handle = EXCLUDED.handle,'
+                 'rank = EXCLUDED.rank,'
+                 'rating_update_time = EXCLUDED.rating_update_time,'
+                 'old_rating = EXCLUDED.old_rating,'
+                 'new_rating = EXCLUDED.new_rating;')
         rc = self.conn.executemany(query, change_tuples).rowcount
         self.conn.commit()
         return rc
@@ -132,14 +157,14 @@ class CacheDbConn:
             query = 'DELETE FROM rating_change'
             self.conn.execute(query)
         else:
-            query = 'DELETE FROM rating_change WHERE contest_id = ?'
+            query = 'DELETE FROM rating_change WHERE contest_id = %s'
             self.conn.execute(query, (contest_id,))
         self.conn.commit()
 
     def get_users_with_more_than_n_contests(self, time_cutoff, n):
         query = ('SELECT handle, COUNT(*) AS num_contests '
-                 'FROM rating_change GROUP BY handle HAVING num_contests >= ? '
-                 'AND MAX(rating_update_time) >= ?')
+                 'FROM rating_change GROUP BY handle HAVING num_contests >= %s '
+                 'AND MAX(rating_update_time) >= %s')
         res = self.conn.execute(query, (n, time_cutoff,)).fetchall()
         return [user[0] for user in res]
 
@@ -157,14 +182,14 @@ class CacheDbConn:
                  'FROM rating_change r '
                  'LEFT JOIN contest c '
                  'ON r.contest_id = c.id '
-                 'WHERE r.contest_id = ?')
+                 'WHERE r.contest_id = %s')
         res = self.conn.execute(query, (contest_id,)).fetchall()
         return [cf.RatingChange._make(change) for change in res]
 
     def has_rating_changes_saved(self, contest_id):
         query = ('SELECT contest_id '
                  'FROM rating_change '
-                 'WHERE contest_id = ?')
+                 'WHERE contest_id = %s')
         res = self.conn.execute(query, (contest_id,)).fetchone()
         return res is not None
 
@@ -173,14 +198,23 @@ class CacheDbConn:
                  'FROM rating_change r '
                  'LEFT JOIN contest c '
                  'ON r.contest_id = c.id '
-                 'WHERE r.handle = ?')
+                 'WHERE r.handle = %s')
         res = self.conn.execute(query, (handle,)).fetchall()
         return [cf.RatingChange._make(change) for change in res]
 
     def cache_problemset(self, problemset):
-        query = ('INSERT OR REPLACE INTO problem2 '
+                query = ('INSERT INTO problem2 '
                  '(contest_id, problemset_name, [index], name, type, points, rating, tags) '
-                 'VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+                 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s) '
+                 'ON CONFLICT ON CONSTRAINT (contest_id) '
+                 'DO UPDATE SET '
+                 'problemset_name = EXCLUDED.problemset_name,'
+                 '[index] = EXCLUDED.[index],'
+                 'name = EXCLUDED.name,'
+                 'type = EXCLUDED.type,'
+                 'points = EXCLUDED.points,'
+                 'rating = EXCLUDED.rating,'
+                 'tags = EXCLUDED.tags;')
         rc = self.conn.executemany(query, list(map(self._squish_tags, problemset))).rowcount
         self.conn.commit()
         return rc
@@ -196,13 +230,13 @@ class CacheDbConn:
             query = 'DELETE FROM problem2'
             self.conn.execute(query)
         else:
-            query = 'DELETE FROM problem2 WHERE contest_id = ?'
+            query = 'DELETE FROM problem2 WHERE contest_id = %s'
             self.conn.execute(query, (contest_id,))
 
     def fetch_problemset(self, contest_id):
         query = ('SELECT contest_id, problemset_name, [index], name, type, points, rating, tags '
                  'FROM problem2 '
-                 'WHERE contest_id = ?')
+                 'WHERE contest_id = %s')
         res = self.conn.execute(query, (contest_id,)).fetchall()
         return list(map(self._unsquish_tags, res))
 

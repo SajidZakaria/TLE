@@ -6,3 +6,4 @@ pycairo
 pygobject
 aiocache
 pytest
+psycopg2
