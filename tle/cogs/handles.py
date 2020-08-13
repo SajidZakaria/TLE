@@ -432,7 +432,7 @@ class Handles(commands.Cog):
         if not rc:
             raise HandleCogError(f'Handle for {member.mention} not found in database')
         # await self.update_member_rank_role(member, role_to_assign=None,
-                                           reason='Handle removed for user')
+                                           # reason='Handle removed for user')
         embed = discord_common.embed_success(f'Removed handle for {member.mention}')
         await ctx.send(embed=embed)
 
