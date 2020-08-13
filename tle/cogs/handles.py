@@ -236,7 +236,7 @@ def _make_pages(users, title):
         t += table.Header('#', 'Name', 'Handle', 'Rating')
         t += table.Line()
         for i, (member, handle, rating) in enumerate(chunk):
-            name = member.display_name
+            name = member
             if len(name) > _NAME_MAX_LEN:
                 name = name[:_NAME_MAX_LEN - 1] + '…'
             rank = cf.rating2rank(rating)
@@ -490,7 +490,6 @@ class Handles(commands.Cog):
         res.sort(key=lambda r: r[1], reverse=True)
 
         rankings = []
-        index = 0
         for user_id, score in res:
             member = ctx.guild.get_member(int(user_id))
             if member is None:
@@ -509,7 +508,7 @@ class Handles(commands.Cog):
 
         if not rankings:
             raise HandleCogError('No one has completed a gitgud challenge, send ;gitgud to request and ;gotgud to mark it as complete')
-        pages = _make_pages(rankings, title)
+        pages = _make_pages(rankings, 'gudgitters')
         paginator.paginate(self.bot, ctx.channel, pages, wait_time=_PAGINATE_WAIT_TIME,
                            set_pagenum_footers=True)
 
