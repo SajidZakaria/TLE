@@ -7,10 +7,10 @@ import html
 import cairo
 import os
 import time
-import gi
-gi.require_version('Pango', '1.0')
-gi.require_version('PangoCairo', '1.0')
-from gi.repository import Pango, PangoCairo
+# import gi
+# gi.require_version('Pango', '1.0')
+# gi.require_version('PangoCairo', '1.0')
+# from gi.repository import Pango, PangoCairo
 
 import discord
 import random
@@ -509,8 +509,9 @@ class Handles(commands.Cog):
 
         if not rankings:
             raise HandleCogError('No one has completed a gitgud challenge, send ;gitgud to request and ;gotgud to mark it as complete')
-        discord_file = get_gudgitters_image(rankings)
-        await ctx.send(file=discord_file)
+        pages = _make_pages(rankings, title)
+        paginator.paginate(self.bot, ctx.channel, pages, wait_time=_PAGINATE_WAIT_TIME,
+                           set_pagenum_footers=True)
 
     @handle.command(brief="Show all handles")
     async def list(self, ctx, *countries):
