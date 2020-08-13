@@ -203,7 +203,7 @@ class CacheDbConn:
         return [cf.RatingChange._make(change) for change in res]
 
     def cache_problemset(self, problemset):
-                query = ('INSERT INTO problem2 '
+        query = ('INSERT INTO problem2 '
                  '(contest_id, problemset_name, [index], name, type, points, rating, tags) '
                  'VALUES (%s, %s, %s, %s, %s, %s, %s, %s) '
                  'ON CONFLICT ON CONSTRAINT (contest_id) '

@@ -8,8 +8,7 @@ DB_DIR = os.path.join(DATA_DIR, 'db')
 MISC_DIR = os.path.join(DATA_DIR, 'misc')
 TEMP_DIR = os.path.join(DATA_DIR, 'temp')
 
-USER_DB_FILE_PATH = os.path.join(DB_DIR, 'user.db')
-CACHE_DB_FILE_PATH = os.path.join(DB_DIR, 'cache.db')
+DATABASE_URL = os.environ['DATABASE_URL']
 
 FONTS_DIR = os.path.join(ASSETS_DIR, 'fonts')
 
