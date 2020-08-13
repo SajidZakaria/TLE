@@ -7,10 +7,10 @@ import html
 import cairo
 import os
 import time
-# import gi
-# gi.require_version('Pango', '1.0')
-# gi.require_version('PangoCairo', '1.0')
-# from gi.repository import Pango, PangoCairo
+import gi
+gi.require_version('Pango', '1.0')
+gi.require_version('PangoCairo', '1.0')
+from gi.repository import Pango, PangoCairo
 
 import discord
 import random
@@ -79,10 +79,6 @@ FONTS = [
     'Noto Sans CJK KR',
 ]
 
-def get_gudgitters_image(rankings):
-	pass
-
-"""
 def get_gudgitters_image(rankings):
     SMOKE_WHITE = (250, 250, 250)
     BLACK = (0, 0, 0)
@@ -162,7 +158,6 @@ def get_gudgitters_image(rankings):
     image_data.seek(0)
     discord_file = discord.File(image_data, filename='gudgitters.png')
     return discord_file
-"""
 
 def get_prettyhandles_image(rows, font):
     """return PIL image for rankings"""
