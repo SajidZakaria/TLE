@@ -1,6 +1,7 @@
 from enum import IntEnum
 from collections import namedtuple
 import psycopg2
+import psycopg2.extras
 
 from discord.ext import commands
 
@@ -62,9 +63,9 @@ def namedtuple_factory(cursor, row):
 
 class UserDbConn:
     def __init__(self, db_url):
-        self.conn = psycopg2.connect(db_url)
-        self.conn.row_factory = namedtuple_factory
+        self.conn = psycopg2.connect(db_url, cursor_factory = psycopg2.extras.NamedTupleCursor)
         self.create_tables()
+        print(conn)
 
     def create_tables(self):
         self.conn.execute(
@@ -242,17 +243,17 @@ class UserDbConn:
         self.conn.commit()
         return rc
 
-    def _fetchone(self, query: str, params=None, row_factory=None):
-        self.conn.row_factory = row_factory
-        res = self.conn.execute(query, params).fetchone()
-        self.conn.row_factory = None
-        return res
+    def _fetchone(self, query: str, params=None, cursor_factory=None):
+        if cursor_factory:
+            cur = self.conn.cursor(cursor_factor = cursor_factory)
+            return cur.execute(query, params)
+        return self.conn.execute(query, params).fetchone()
 
-    def _fetchall(self, query: str, params=None, row_factory=None):
-        self.conn.row_factory = row_factory
-        res = self.conn.execute(query, params).fetchall()
-        self.conn.row_factory = None
-        return res
+    def _fetchall(self, query: str, params=None, cursor_factory=None):
+        if cursor_factor:
+            cur = self.conn.cursor(cursor_factor = cursor_factory)
+            return cur.execute(query, params)
+        return self.conn.execute(query, params).fetchall()
 
     def new_challenge(self, user_id, issue_time, prob, delta):
         query1 = '''
@@ -842,7 +843,7 @@ class UserDbConn:
         query = ('SELECT * '
                 'FROM rated_vcs '
                 'WHERE id = %s ')
-        vc = self._fetchone(query, params=(vc_id,), row_factory=namedtuple_factory)
+        vc = self._fetchone(query, params=(vc_id,), cursor_factory=psycopg2.extras.NamedTupleCursor)
         return vc
 
     def get_ongoing_rated_vc_ids(self):
@@ -850,7 +851,7 @@ class UserDbConn:
                  'FROM rated_vcs '
                  'WHERE status = %s '
                  )
-        vcs = self._fetchall(query, params=(RatedVC.ONGOING,), row_factory=namedtuple_factory)
+        vcs = self._fetchall(query, params=(RatedVC.ONGOING,), cursor_factory=psycopg2.extras.NamedTupleCursor)
         vc_ids = [vc.id for vc in vcs]
         return vc_ids
 
@@ -859,7 +860,7 @@ class UserDbConn:
                  'FROM rated_vc_users '
                  'WHERE vc_id = %s '
                  )
-        users = self._fetchall(query, params=(vc_id,), row_factory=namedtuple_factory)
+        users = self._fetchall(query, params=(vc_id,), cursor_factory=psycopg2.extras.NamedTupleCursor)
         user_ids = [user.user_id for user in users]
         return user_ids
 
@@ -888,7 +889,7 @@ class UserDbConn:
                  'FROM rated_vc_users '
                  'WHERE user_id = %s AND rating IS NOT NULL'
                  )
-        rating = self._fetchone(query, params=(user_id, ), row_factory=namedtuple_factory).rating
+        rating = self._fetchone(query, params=(user_id, ), cursor_factory=psycopg2.extras.NamedTupleCursor).rating
         if rating is None:
             if default_if_not_exist:
                 return _DEFAULT_VC_RATING
@@ -902,7 +903,7 @@ class UserDbConn:
                  'FROM rated_vc_users '
                  'WHERE user_id = %s AND rating IS NOT NULL'
                  )
-        ratings = self._fetchall(query, params=(user_id,), row_factory=namedtuple_factory)
+        ratings = self._fetchall(query, params=(user_id,), cursor_factory=psycopg2.extras.NamedTupleCursor)
         return ratings
 
     def set_rated_vc_channel(self, guild_id, channel_id):
@@ -927,7 +928,7 @@ class UserDbConn:
                  'FROM rated_vc_users '
                  'WHERE user_id = %s '
                  )
-        vc_id = self._fetchone(query, params=(user_id, ), row_factory=namedtuple_factory).vc_id
+        vc_id = self._fetchone(query, params=(user_id, ), cursor_factory=psycopg2.extras.NamedTupleCursor).vc_id
         query = ('DELETE FROM rated_vc_users '
                  'WHERE user_id = %s AND vc_id = %s ')
         with self.conn:
