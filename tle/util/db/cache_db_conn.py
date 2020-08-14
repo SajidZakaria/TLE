@@ -29,7 +29,7 @@ class CacheDbConn:
             'CREATE TABLE IF NOT EXISTS problem ('
             'contest_id       INTEGER,'
             'problemset_name  TEXT,'
-            '[index]          TEXT,'
+            'index          TEXT,'
             'name             TEXT NOT NULL,'
             'type             TEXT,'
             'points           REAL,'
@@ -63,13 +63,13 @@ class CacheDbConn:
             'CREATE TABLE IF NOT EXISTS problem2 ('
             'contest_id       INTEGER,'
             'problemset_name  TEXT,'
-            '[index]          TEXT,'
+            'index          TEXT,'
             'name             TEXT NOT NULL,'
             'type             TEXT,'
             'points           REAL,'
             'rating           INTEGER,'
             'tags             TEXT,'
-            'PRIMARY KEY (contest_id, [index])'
+            'PRIMARY KEY (contest_id, index)'
             ')'
         )
         cur.execute('CREATE INDEX IF NOT EXISTS ix_problem2_contest_id '
@@ -108,12 +108,12 @@ class CacheDbConn:
 
     def cache_problems(self, problems):
         query = ('INSERT INTO problem '
-                 '(contest_id, problemset_name, [index], name, type, points, rating, tags) '
+                 '(contest_id, problemset_name, index, name, type, points, rating, tags) '
                  'VALUES (%s, %s, %s, %s, %s, %s, %s, %s) '
                  'ON CONFLICT ON CONSTRAINT (contest_id) '
                  'DO UPDATE SET '
                  'problemset_name = EXCLUDED.problemset_name,'
-                 '[index] = EXCLUDED.[index],'
+                 'index = EXCLUDED.index,'
                  'name = EXCLUDED.name,'
                  'type = EXCLUDED.type,'
                  'points = EXCLUDED.points,'
@@ -130,7 +130,7 @@ class CacheDbConn:
         return cf.Problem(*args, tags)
 
     def fetch_problems(self):
-        query = ('SELECT contest_id, problemset_name, [index], name, type, points, rating, tags '
+        query = ('SELECT contest_id, problemset_name, index, name, type, points, rating, tags '
                  'FROM problem')
         cur = self.conn.cursor()
         res = cur.execute(query).fetchall()
@@ -216,12 +216,12 @@ class CacheDbConn:
 
     def cache_problemset(self, problemset):
         query = ('INSERT INTO problem2 '
-                 '(contest_id, problemset_name, [index], name, type, points, rating, tags) '
+                 '(contest_id, problemset_name, index, name, type, points, rating, tags) '
                  'VALUES (%s, %s, %s, %s, %s, %s, %s, %s) '
                  'ON CONFLICT ON CONSTRAINT (contest_id) '
                  'DO UPDATE SET '
                  'problemset_name = EXCLUDED.problemset_name,'
-                 '[index] = EXCLUDED.[index],'
+                 'index = EXCLUDED.index,'
                  'name = EXCLUDED.name,'
                  'type = EXCLUDED.type,'
                  'points = EXCLUDED.points,'
@@ -233,7 +233,7 @@ class CacheDbConn:
         return rc
 
     def fetch_problems2(self):
-        query = ('SELECT contest_id, problemset_name, [index], name, type, points, rating, tags '
+        query = ('SELECT contest_id, problemset_name, index, name, type, points, rating, tags '
                  'FROM problem2 ')
         cur = self.conn.cursor()
         res = cur.execute(query).fetchall()
@@ -249,7 +249,7 @@ class CacheDbConn:
             cur.execute(query, (contest_id,))
 
     def fetch_problemset(self, contest_id):
-        query = ('SELECT contest_id, problemset_name, [index], name, type, points, rating, tags '
+        query = ('SELECT contest_id, problemset_name, index, name, type, points, rating, tags '
                  'FROM problem2 '
                  'WHERE contest_id = %s')
         cur = self.conn.cursor()
