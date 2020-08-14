@@ -249,14 +249,14 @@ class UserDbConn:
 
     def _fetchone(self, query: str, params=None, cursor_factory=None):
         if cursor_factory:
-            cur = self.conn.cursor(cursor_factor = cursor_factory)
+            cur = self.conn.cursor(cursor_factory = cursor_factory)
             return cur.execute(query, params)
         cur = self.conn.cursor()
         return cur.execute(query, params).fetchone()
 
     def _fetchall(self, query: str, params=None, cursor_factory=None):
-        if cursor_factor:
-            cur = self.conn.cursor(cursor_factor = cursor_factory)
+        if cursor_factory:
+            cur = self.conn.cursor(cursor_factory = cursor_factory)
             return cur.execute(query, params)
         cur = self.conn.cursor()
         return cur.execute(query, params).fetchall()
