@@ -90,7 +90,8 @@ class CacheDbConn:
                  'phase = EXCLUDED.phase,'
                  'prepared_by = EXCLUDED.prepared_by;')
         cur = self.conn.cursor()
-        rc = cur.executemany(query, contests).rowcount
+        cur.executemany(query, contests)
+        rc = cur.rowcount
         self.conn.commit()
         return rc
 
@@ -98,7 +99,8 @@ class CacheDbConn:
         query = ('SELECT id, name, start_time, duration, type, phase, prepared_by '
                  'FROM contest')
         cur = self.conn.cursor()
-        res = cur.execute(query).fetchall()
+        cur.execute(query)
+        res = cur.fetchall()
         return [cf.Contest._make(contest) for contest in res]
 
     @staticmethod
@@ -120,7 +122,8 @@ class CacheDbConn:
                  'rating = EXCLUDED.rating,'
                  'tags = EXCLUDED.tags;')
         cur = self.conn.cursor()
-        rc = cur.executemany(query, list(map(self._squish_tags, problems))).rowcount
+        cur.executemany(query, list(map(self._squish_tags, problems)))
+        rc = cur.rowcount
         self.conn.commit()
         return rc
 
@@ -133,7 +136,8 @@ class CacheDbConn:
         query = ('SELECT contest_id, problemset_name, index, name, type, points, rating, tags '
                  'FROM problem')
         cur = self.conn.cursor()
-        res = cur.execute(query).fetchall()
+        cur.execute(query)
+        res = cur.fetchall()
         return list(map(self._unsquish_tags, res))
 
     def save_rating_changes(self, changes):
@@ -154,7 +158,8 @@ class CacheDbConn:
                  'old_rating = EXCLUDED.old_rating,'
                  'new_rating = EXCLUDED.new_rating;')
         cur = self.conn.cursor()
-        rc = cur.executemany(query, change_tuples).rowcount
+        cur.executemany(query, change_tuples)
+        rc = cur.rowcount
         self.conn.commit()
         return rc
 
@@ -173,7 +178,8 @@ class CacheDbConn:
                  'FROM rating_change GROUP BY handle HAVING num_contests >= %s '
                  'AND MAX(rating_update_time) >= %s')
         cur = self.conn.cursor()
-        res = cur.execute(query, (n, time_cutoff,)).fetchall()
+        cur.execute(query, (n, time_cutoff,))
+        res = cur.fetchall()
         return [user[0] for user in res]
 
     def get_all_rating_changes(self):
@@ -183,7 +189,8 @@ class CacheDbConn:
                  'ON r.contest_id = c.id '
                  'ORDER BY rating_update_time')
         cur = self.conn.cursor()
-        res = cur.execute(query)
+        cur.execute(query)
+        res = cur.fetchall()
         return (cf.RatingChange._make(change) for change in res)
 
     def get_rating_changes_for_contest(self, contest_id):
@@ -193,7 +200,8 @@ class CacheDbConn:
                  'ON r.contest_id = c.id '
                  'WHERE r.contest_id = %s')
         cur = self.conn.cursor()
-        res = cur.execute(query, (contest_id,)).fetchall()
+        cur.execute(query, (contest_id,))
+        res = cur.fetchall()
         return [cf.RatingChange._make(change) for change in res]
 
     def has_rating_changes_saved(self, contest_id):
@@ -201,7 +209,8 @@ class CacheDbConn:
                  'FROM rating_change '
                  'WHERE contest_id = %s')
         cur = self.conn.cursor()
-        res = cur.execute(query, (contest_id,)).fetchone()
+        cur.execute(query, (contest_id,))
+        res = cur.fetchone()
         return res is not None
 
     def get_rating_changes_for_handle(self, handle):
@@ -211,7 +220,8 @@ class CacheDbConn:
                  'ON r.contest_id = c.id '
                  'WHERE r.handle = %s')
         cur = self.conn.cursor()
-        res = cur.execute(query, (handle,)).fetchall()
+        cur.execute(query, (handle,))
+        res = cur.fetchall()
         return [cf.RatingChange._make(change) for change in res]
 
     def cache_problemset(self, problemset):
@@ -228,7 +238,8 @@ class CacheDbConn:
                  'rating = EXCLUDED.rating,'
                  'tags = EXCLUDED.tags;')
         cur = self.conn.cursor()
-        rc = cur.executemany(query, list(map(self._squish_tags, problemset))).rowcount
+        cur.executemany(query, list(map(self._squish_tags, problemset)))
+        rc = cur.rowcount
         self.conn.commit()
         return rc
 
@@ -236,7 +247,8 @@ class CacheDbConn:
         query = ('SELECT contest_id, problemset_name, index, name, type, points, rating, tags '
                  'FROM problem2 ')
         cur = self.conn.cursor()
-        res = cur.execute(query).fetchall()
+        cur.execute(query)
+        res = cur.fetchall()
         return list(map(self._unsquish_tags, res))
 
     def clear_problemset(self, contest_id=None):
@@ -253,13 +265,15 @@ class CacheDbConn:
                  'FROM problem2 '
                  'WHERE contest_id = %s')
         cur = self.conn.cursor()
-        res = cur.execute(query, (contest_id,)).fetchall()
+        cur.execute(query, (contest_id,))
+        res = cur.fetchall()
         return list(map(self._unsquish_tags, res))
 
     def problemset_empty(self):
         query = 'SELECT 1 FROM problem2'
         cur = self.conn.cursor()
-        res = cur.execute(query).fetchone()
+        cur.execute(query)
+        res = cur.fetchone()
         return res is None
 
     def close(self):
