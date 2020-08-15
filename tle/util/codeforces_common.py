@@ -52,7 +52,7 @@ async def initialize(nodb):
     else:
         user_db = db.UserDbConn(constants.DATABASE_URL)
 
-    cache_db = db.CacheDbConn(constants.DATABASE_URL)
+    cache_db = db.CacheDbConn(constants.CACHE_DB_FILE_PATH)
     cache2 = cache_system2.CacheSystem(cache_db)
     await cache2.run()
 
