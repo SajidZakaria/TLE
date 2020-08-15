@@ -221,7 +221,7 @@ class UserDbConn:
         rest_cols = map(lambda s: '{} = EXCLUDED.{},'.format(s), columns[1:])
         query = '''
             INSERT INTO {} ({}) VALUES ({})
-            ON CONFLICT ON CONSTRAINT ({}) 
+            ON CONFLICT ({}) 
             DO UPDATE SET 
             {}
         '''.format(table, ', '.join(columns), ', '.join(['%s'] * n), first_col, rest_cols)
@@ -238,7 +238,7 @@ class UserDbConn:
         rest_cols = map(lambda s: '{} = EXCLUDED.{},'.format(s), columns[1:])
         query = '''
             INSERT INTO {} ({}) VALUES ({})
-            ON CONFLICT ON CONSTRAINT ({}) 
+            ON CONFLICT ({}) 
             DO UPDATE SET 
             {}
         '''.format(table, ', '.join(columns), ', '.join(['%s'] * n), first_col, rest_cols)
@@ -400,7 +400,7 @@ class UserDbConn:
                  '(handle, first_name, last_name, country, city, organization, contribution, '
                  '    rating, last_online_time, registration_time, friend_of_count, title_photo) '
                  'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) '
-                 'ON CONFLICT ON CONSTRAINT (handle) '
+                 'ON CONFLICT (handle) '
                  'DO UPDATE SET '
                  'first_name = EXCLUDED.first_name'
                  'last_name = EXCLUDED.last_name'
@@ -442,13 +442,14 @@ class UserDbConn:
         query = ('INSERT INTO user_handle '
                  '(user_id, guild_id, handle, active) '
                  'VALUES (%s, CAST(%s AS INTEGER), %s, 1) '
-                 'ON CONFLICT ON CONSTRAINT (user_id) '
+                 'ON CONFLICT (user_id) '
                  'DO UPDATE SET '
                  'guild_id = EXCLUDED.guild_id,'
                  'handle = EXCLUDED.handle,'
                  'active = EXCLUDED.active;')
         with self.conn:
             cur = self.conn.cursor()
+            print(query, user_id, guild_id, handle)
             cur.execute(query, (user_id, guild_id, handle))
             return cur.rowcount
 
@@ -513,7 +514,7 @@ class UserDbConn:
         query = '''
             SELECT channel_id, role_id, before
             FROM reminder
-            WHERE guild_id = %s
+            WHERE guild_id = CAST(%s AS TEXT)
         '''
         cur = self.conn.cursor()
         cur.execute(query, (guild_id,))
@@ -523,7 +524,7 @@ class UserDbConn:
         query = '''
             INSERT INTO reminder (guild_id, channel_id, role_id, before)
             VALUES (CAST(%s AS TEXT), %s, %s, %s) 
-            ON CONFLICT ON CONSTRAINT (guild_id) 
+            ON CONFLICT (guild_id) 
             DO UPDATE SET 
             channel_id = EXCLUDED.channel_id,
             role_id = EXCLUDED.role_id,
@@ -551,7 +552,7 @@ class UserDbConn:
         query = ('INSERT INTO starboard '
                  '(guild_id, channel_id) '
                  'VALUES (CAST(%s AS TEXT), %s)'
-                 'ON CONFLICT ON CONSTRAINT (guild_id) '
+                 'ON CONFLICT (guild_id) '
                  'DO UPDATE SET '
                  'channel_id = EXCLUDED.channel_id;')
         cur = self.conn.cursor()
@@ -886,7 +887,7 @@ class UserDbConn:
         query = ('INSERT INTO rankup '
                  '(guild_id, channel_id) '
                  'VALUES (CAST (%s AS TEXT), %s)'
-                 'ON CONFLICT ON CONSTRAINT (guild_id) '
+                 'ON CONFLICT (guild_id) '
                  'DO UPDATE SET '
                  'channel_id = EXCLUDED.channel_id')
         with self.conn:
@@ -1013,7 +1014,7 @@ class UserDbConn:
         query = ('INSERT INTO rated_vc_users '
                  '(vc_id, user_id, rating) '
                  'VALUES (%s, %s, %s) '
-                 'ON CONFLICT ON CONSTRAINT (vc_id) '
+                 'ON CONFLICT (vc_id) '
                  'DO UPDATE SET '
                  'user_id = EXCLUDED.user_id,'
                  'rating = EXCLUDED.rating;')
@@ -1047,7 +1048,7 @@ class UserDbConn:
     def set_rated_vc_channel(self, guild_id, channel_id):
         query = ('INSERT INTO rated_vc_settings '
                  ' (guild_id, channel_id) VALUES (CAST(%s AS TEXT), %s)'
-                 'ON CONFLICT ON CONSTRAINT (guild_id) '
+                 'ON CONFLICT (guild_id) '
                  'DO UPDATE SET '
                  'channel_id = EXCLUDED.channel_id;'
                  )
