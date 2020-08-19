@@ -264,7 +264,7 @@ def _make_pages_gudgitters(users, title):
                 name = name[:_NAME_MAX_LEN - 1] + '…'
             rank = cf.rating2rank(rating)
             rating_str = 'N/A' if rating is None else str(rating)
-            t += table.Data(i + done, name, handle, f'{rating_str} ({rank.title_abbr})')
+            t += table.Data(i + done, name, handle, f'{rating_str}')
         table_str = '```\n'+str(t)+'\n```'
         embed = discord_common.cf_color_embed(description=table_str)
         pages.append((title, embed))
@@ -520,14 +520,10 @@ class Handles(commands.Cog):
             if score > 0:
                 handle = cf_common.user_db.get_handle(user_id, ctx.guild.id)
                 user = cf_common.user_db.fetch_cf_user(handle)
-                if user is None:
-                    continue
-                discord_handle = member.display_name
-                rating = user.rating
-                rankings.append((index, discord_handle, handle, rating, score))
-                index += 1
-            if index == 10:
-                break
+                if user is not None:
+                    handle_display = f'{member.display_name} ({score})'
+                    rating = user.rating
+                    rankings.append((handle_display, handle, rating))
 
         if not rankings:
             raise HandleCogError('No one has completed a gitgud challenge, send ;gitgud to request and ;gotgud to mark it as complete')
