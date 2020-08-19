@@ -106,7 +106,7 @@ class UserDbConn:
         ''')
         cur.execute('''
             CREATE TABLE IF NOT EXISTS duel (
-                "id"	SERIAL PRIMARY KEY,
+                "id"	        SERIAL PRIMARY KEY,
                 "challenger"	INTEGER NOT NULL,
                 "challengee"	INTEGER NOT NULL,
                 "issue_time"	REAL NOT NULL,
@@ -135,21 +135,21 @@ class UserDbConn:
         ''')
         cur.execute('''
             CREATE TABLE IF NOT EXISTS "user_challenge" (
-                "user_id"	TEXT,
+                "user_id"	            TEXT,
                 "active_challenge_id"	INTEGER,
-                "issue_time"	REAL,
-                "score"	INTEGER NOT NULL,
-                "num_completed"	INTEGER NOT NULL,
-                "num_skipped"	INTEGER NOT NULL,
+                "issue_time"	        REAL,
+                "score"	INTEGER         NOT NULL,
+                "num_completed"	        INTEGER NOT NULL,
+                "num_skipped"	        INTEGER NOT NULL,
                 PRIMARY KEY("user_id")
             );
         ''')
         cur.execute('''
             CREATE TABLE IF NOT EXISTS reminder (
-                guild_id TEXT PRIMARY KEY,
-                channel_id TEXT,
-                role_id TEXT,
-                before TEXT
+                guild_id        TEXT PRIMARY KEY,
+                channel_id      TEXT,
+                role_id         TEXT,
+                before          TEXT
             );
         ''')
         cur.execute(
@@ -209,6 +209,19 @@ class UserDbConn:
                 guild_id TEXT PRIMARY KEY,
                 channel_id TEXT
             );
+        ''')
+
+        # set current id for serial columns
+        cur.execute('''
+            SELECT setval(pg_get_serial_sequence('duel', 'id'), (SELECT MAX(id) FROM duel) + 1);
+        ''')
+
+        cur.execute('''
+            SELECT setval(pg_get_serial_sequence('challenge', 'id'), (SELECT MAX(id) FROM challenge) + 1);
+        ''')
+
+        cur.execute('''
+            SELECT setval(pg_get_serial_sequence('rated_vcs', 'id'), (SELECT MAX(id) FROM rated_vcs) + 1);
         ''')
 
         self.conn.commit()
