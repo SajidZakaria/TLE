@@ -67,6 +67,9 @@ class UserDbConn:
         self.conn.rollback()
         self.create_tables()
 
+    def rollback(self):
+        self.conn.rollback()
+
     def create_tables(self):
         cur = self.conn.cursor()
         cur.execute(
@@ -446,7 +449,6 @@ class UserDbConn:
         return cf.User._make(user) if user else None
 
     def set_handle(self, user_id, guild_id, handle):
-        self.conn.rollback()
         query = ('SELECT user_id '
                  'FROM user_handle '
                  'WHERE guild_id = CAST(%s AS TEXT) AND handle = %s;')
