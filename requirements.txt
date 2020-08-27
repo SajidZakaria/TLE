@@ -2,8 +2,6 @@ discord.py>=1.4,<1.5
 seaborn
 lxml
 pillow
-pycairo
-pygobject
 aiocache
 pytest
 psycopg2
