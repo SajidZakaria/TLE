@@ -63,12 +63,16 @@ def namedtuple_factory(cursor, row):
 
 class UserDbConn:
     def __init__(self, db_url):
+        self.db_url = db_url
         self.conn = psycopg2.connect(db_url, cursor_factory = psycopg2.extras.NamedTupleCursor)
         self.conn.rollback()
         self.create_tables()
 
     def rollback(self):
         self.conn.rollback()
+    
+    def reconnect(self):
+        self.conn = psycopg2.connect(db_url, cursor_factory = psycopg2.extras.NamedTupleCursor)
 
     def create_tables(self):
         cur = self.conn.cursor()

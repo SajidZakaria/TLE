@@ -105,5 +105,11 @@ class Meta(commands.Cog):
         cf_common.user_db.rollback()
         await ctx.send('Rollbacked changes.')
 
+    @meta.command(brief='Reconnect bot to database')
+    async def reconnect(self, ctx):
+        """Reconnect bot to database (only use if necessary when commands stop working)"""
+        cf_common.user_db.reconnect()
+        await ctx.send('Reconnected to database.')
+
 def setup(bot):
     bot.add_cog(Meta(bot))
