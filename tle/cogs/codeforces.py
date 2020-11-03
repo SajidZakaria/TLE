@@ -3,6 +3,7 @@ import random
 from typing import List
 import math
 import time
+import re
 from collections import defaultdict
 
 import discord
@@ -134,6 +135,26 @@ class Codeforces(commands.Cog):
             tagslist = ', '.join(problem.tag_matches(tags))
             embed.add_field(name='Matched tags', value=tagslist)
         await ctx.send(f'Recommended problem for `{handle}`', embed=embed)
+
+    @commands.command(brief='Get the link of problem (cf / atcoder)',
+                      usage='problemid')
+    async def link(self, ctx, idx: str):
+        """Get problem link by id (cf / atcoder)"""
+        cf_match = re.match(r"^(\d+)([a-zA-Z]\d?)$", idx)
+        at_match = re.match(r"^(a[brg]c\d{3})([a-zA-Z])$", idx)
+
+        pb_link = None
+        if cf_match:
+            contest, problem = cf_match.groups()
+            pb_link = f"https://codeforces.com/contest/{contest}/problem/{problem.upper()}"
+        elif at_match:
+            contest, problem = at_match.groups()
+            pb_link = f"https://atcoder.jp/contests/{contest}/tasks/{contest}_{problem.upper()}"
+
+        if not pb_link:
+            raise CodeforcesCogError('Problem not found')
+
+        await ctx.send(pb_link)
 
     @commands.command(brief='List solved problems',
                       usage='[handles] [+hardest] [+practice] [+contest] [+virtual] [+outof] [+team] [+tag..] [r>=rating] [r<=rating] [d>=[[dd]mm]yyyy] [d<[[dd]mm]yyyy] [c+marker..] [i+index..]')
