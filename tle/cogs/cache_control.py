@@ -1,6 +1,8 @@
 import functools
 import time
 import traceback
+import aiohttp
+import bs4
 
 from discord.ext import commands
 
@@ -83,6 +85,69 @@ class CacheControl(commands.Cog):
                 return
             count = await cf_common.cache2.problemset_cache.update_for_contest(contest_id)
         await ctx.send(f'Done, fetched {count} problems')
+
+    @cache.command(usage='list_key name')
+    @commands.has_role('Admin')
+    @timed_command
+    async def list(self, ctx, list_key, name):
+        session = aiohttp.ClientSession()
+
+        async def __single_query(url):
+            nonlocal session
+            async with session.get(url) as resp:
+                html_raw = await resp.text()
+                soup = bs4.BeautifulSoup(html_raw, features="lxml")
+                table = soup.find_all("table")[0]
+                rows = table.find_all("tr")[1:]
+                result = []
+                for row in rows:
+                    span = row.find("span", {"class": "small"})
+                    if span is None:
+                        continue
+                    cnt = int(span.text.split('/')[0])
+                    col = row.find_all("td")[0]
+                    problem_id = col.text.strip()
+                    result.append([problem_id, cnt])
+            return result
+
+        await ctx.send('This will take a while')
+        page_num = 0
+        async with session.get("https://codeforces.com/problemset/") as resp:
+            html_raw = await resp.text()
+            soup = bs4.BeautifulSoup(html_raw, features="lxml")
+            page_div = soup.find_all("ul")[-1]
+            page_num = page_div.find_all("span", {"class": "page-index"})[-1].text
+            page_num = int(page_num)
+
+        await ctx.send(f"{page_num} pages to check...")
+        url = "https://codeforces.com/problemset/page/{}?list={}"
+        counts = []
+        for i in range(1, page_num + 1):
+            current_page = url.format(i, list_key)
+            print(url.format(i, list_key))
+            result = await __single_query(current_page)
+            if result is None:
+                break
+            counts += result
+
+        await ctx.send(f'Found result for {len(counts)} problems')
+        result = "\n".join(f"{item[0]},{item[1]}" for item in counts)
+        with open(f"data/list/{name}.csv", "w") as file:
+            file.write(result)
+        await session.close()
+
+    async def cog_command_error(self, ctx, error):
+        if isinstance(error, commands.CommandInvokeError):
+            error = error.__cause__
+        lines = traceback.format_exception(type(error), error, error.__traceback__)
+        msg = '\n'.join(lines)
+        discord_msg_char_limit = 2000
+        char_limit = discord_msg_char_limit - 2 * len('```')
+        too_long = len(msg) > char_limit
+        msg = msg[:char_limit]
+        await ctx.send(f'```{msg}```')
+        if too_long:
+            await ctx.send('Check logs for full stack trace')
 
 
 def setup(bot):

@@ -23,6 +23,21 @@ _GITGUD_SCORE_DISTRIB = (2, 3, 5, 8, 12, 17, 23)
 _GITGUD_MAX_ABS_DELTA_VALUE = 300
 
 
+def _get_problem_id(problem):
+    return f"{problem.contestId}{problem.index}"
+
+
+def _get_list_count(name, cutoff):
+    count = {}
+    with open(f"data/list/{name}.csv", "r") as file:
+        for line in file.readlines():
+            problem_id, cnt = line.split(',')
+            cnt = int(cnt)
+            if cnt >= cutoff:
+                count[problem_id] = cnt
+    return count
+
+
 class CodeforcesCogError(commands.CommandError):
     pass
 
@@ -156,6 +171,56 @@ class Codeforces(commands.Cog):
 
         await ctx.send(pb_link)
 
+    @commands.command(brief='Recommend a (good) problem',
+                      usage='name [tags...] [rating] [>=cutoff]')
+    @cf_common.user_guard(group='gitgud')
+    async def givlist(self, ctx, name, *args):
+        """Recommand random problem, based on solved by people in list"""
+        handle, = await cf_common.resolve_handles(ctx, self.converter, ('!' + str(ctx.author),))
+        rating = round(cf_common.user_db.fetch_cf_user(handle).effective_rating, -2)
+        tags = []
+        cutoff = 0
+        for arg in args:
+            if arg.isdigit():
+                rating = int(arg)
+            elif arg[:2] == ">=":
+                cutoff = int(arg[2:])
+            else:
+                tags.append(arg)
+
+        count = _get_list_count(name, cutoff)
+        submissions = await cf.user.status(handle=handle)
+        solved = {sub.problem.name for sub in submissions if sub.verdict == 'OK'}
+
+        problems = [prob for prob in cf_common.cache2.problem_cache.problems
+                    if prob.rating == rating and prob.name not in solved and
+                    _get_problem_id(prob) in count.keys()]
+        if tags:
+            problems = [prob for prob in problems if prob.tag_matches(tags)]
+
+        if not problems:
+            raise CodeforcesCogError('Problems not found within the search parameters')
+
+        problems.sort(key=lambda problem: count[_get_problem_id(problem)])
+
+        choice = max([random.randrange(len(problems)) for _ in range(4)])
+        problem = problems[choice]
+
+        cnt = count[f"{problem.contestId}{problem.index}"]
+        await ctx.send(f"{cnt} people solved this !!!")
+        await ctx.send(f"valid problems = {len(problems)}, "
+                       f"min solved = {count[_get_problem_id(problems[0])]}, "
+                       f"max solved = {count[_get_problem_id(problems[-1])]}")
+
+        title = f'{problem.index}. {problem.name}'
+        desc = cf_common.cache2.contest_cache.get_contest(problem.contestId).name
+        embed = discord.Embed(title=title, url=problem.url, description=desc)
+        embed.add_field(name='Rating', value=problem.rating)
+        if tags:
+            tagslist = ', '.join(problem.tag_matches(tags))
+            embed.add_field(name='Matched tags', value=tagslist)
+        await ctx.send(f'Recommended problem for `{handle}`', embed=embed)
+
     @commands.command(brief='List solved problems',
                       usage='[handles] [+hardest] [+practice] [+contest] [+virtual] [+outof] [+team] [+tag..] [r>=rating] [r<=rating] [d>=[[dd]mm]yyyy] [d<[[dd]mm]yyyy] [c+marker..] [i+index..]')
     async def stalk(self, ctx, *args):
@@ -234,6 +299,47 @@ class Codeforces(commands.Cog):
 
         problems = reversed([problems[k] for k in choices])
         msg = '\n'.join(f'{"ABCD"[i]}: [{p.name}]({p.url}) [{p.rating}]' for i, p in enumerate(problems))
+        str_handles = '`, `'.join(handles)
+        embed = discord_common.cf_color_embed(description=msg)
+        await ctx.send(f'Mashup contest for `{str_handles}`', embed=embed)
+
+    @commands.command(brief='Create a (good) mashup', usage='name count lower:upper [handles] [+tags] [>=cutoff]')
+    async def bestlist(self, ctx, name: str, cnt: int, *args):
+        """Create a mashup contest using problems with maximum solved by list members.
+        """
+        handles = [arg for arg in args if arg[0] != '+' and arg[:2] != ">=" and ":" not in arg]
+        tags = [arg[1:] for arg in args if arg[0] == '+' and len(arg) > 1]
+
+        req = [arg for arg in args if ":" in arg]
+        assert len(req) == 1
+        lower, upper = req[0].split(":")
+        lower = int(lower) if lower else 0
+        upper = int(upper) if upper else 9999
+
+        cutoff = [arg for arg in args if arg[:2] == ">="]
+        cutoff = int(cutoff[0][2:]) if cutoff else 0
+
+        count = _get_list_count(name, cutoff)
+        handles = handles or ('!' + str(ctx.author),)
+        handles = await cf_common.resolve_handles(ctx, self.converter, handles)
+        resp = [await cf.user.status(handle=handle) for handle in handles]
+        submissions = [sub for user in resp for sub in user]
+        solved = {sub.problem.name for sub in submissions}
+        info = await cf.user.info(handles=handles)
+        problems = [prob for prob in cf_common.cache2.problem_cache.problems
+                    if lower <= prob.rating <= upper and prob.name not in solved
+                    and not any(cf_common.is_contest_writer(prob.contestId, handle) for handle in handles)
+                    and not cf_common.is_nonstandard_problem(prob)
+                    and _get_problem_id(prob) in count.keys()]
+        if tags:
+            problems = [prob for prob in problems if prob.tag_matches(tags)]
+
+        cnt = min(cnt, len(problems), 20)
+        await ctx.send(f"Found {len(problems)} valid problem")
+        problems.sort(key=lambda problem: count[_get_problem_id(problem)])
+        problems.reverse()
+        problems = problems[:cnt]
+        msg = '\n'.join(f'{i + 1}: [{p.name}]({p.url}) [{p.rating}] {count[_get_problem_id(p)]}x' for i, p in enumerate(problems))
         str_handles = '`, `'.join(handles)
         embed = discord_common.cf_color_embed(description=msg)
         await ctx.send(f'Mashup contest for `{str_handles}`', embed=embed)

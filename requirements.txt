@@ -5,3 +5,5 @@ pillow
 aiocache
 pytest
 psycopg2
+bs4
+aiohttp
