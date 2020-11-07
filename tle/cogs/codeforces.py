@@ -156,14 +156,19 @@ class Codeforces(commands.Cog):
     async def link(self, ctx, idx: str):
         """Get problem link by id (cf / atcoder)"""
         cf_match = re.match(r"^(\d+)([a-zA-Z]\d?)$", idx)
-        at_match = re.match(r"^(a[brg]c\d{3})([a-zA-Z])$", idx)
+        at_match = re.match(r"^(a[brg]c\d{,3})([a-zA-Z])$", idx)
 
         pb_link = None
         if cf_match:
             contest, problem = cf_match.groups()
-            pb_link = f"https://codeforces.com/contest/{contest}/problem/{problem.upper()}"
+            pb_link = "https://codeforces.com/{0}/{1}/problem/{2}".format(
+                "contest" if len(contest) < 6 else "gym",
+                contest,
+                problem.upper()
+            )
         elif at_match:
             contest, problem = at_match.groups()
+            contest = contest[:3] + ("0" * (6 - len(contest))) + contest[3:]
             pb_link = f"https://atcoder.jp/contests/{contest}/tasks/{contest}_{problem.upper()}"
 
         if not pb_link:
