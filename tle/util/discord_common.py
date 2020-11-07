@@ -130,7 +130,7 @@ async def presence(bot):
         while True:
             target = random.choice([
                 member for member in bot.get_all_members()
-                if 'Purgatory' not in {role.name for role in member.roles}
+                if set(role.name for role in member.roles) & {'teacher', 'student', 'Admin'}
             ])
             await bot.change_presence(activity=discord.Game(
                 name=f'{target.display_name} orz'))
