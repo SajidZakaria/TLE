@@ -1,4 +1,4 @@
-discord.py>=1.4,<1.5
+discord.py>=1.5,<1.6
 seaborn
 lxml
 pillow
@@ -6,4 +6,3 @@ aiocache
 pytest
 psycopg2
 bs4
-aiohttp
