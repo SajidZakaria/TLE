@@ -64,7 +64,7 @@ def namedtuple_factory(cursor, row):
 class UserDbConn:
     def __init__(self, db_url):
         self.db_url = db_url
-        self.conn = psycopg2.connect(db_url, cursor_factory = psycopg2.extras.NamedTupleCursor)
+        self.conn = psycopg2.connect(db_url)
         self.conn.rollback()
         self.create_tables()
 
@@ -72,7 +72,7 @@ class UserDbConn:
         self.conn.rollback()
     
     def reconnect(self):
-        self.conn = psycopg2.connect(self.db_url, cursor_factory = psycopg2.extras.NamedTupleCursor)
+        self.conn = psycopg2.connect(self.db_url)
 
     def create_tables(self):
         cur = self.conn.cursor()
@@ -273,18 +273,16 @@ class UserDbConn:
     def _fetchone(self, query: str, params=None, cursor_factory=None):
         if cursor_factory:
             cur = self.conn.cursor(cursor_factory = cursor_factory)
-            cur.execute(query, params)
-            return cur.fetchone()
-        cur = self.conn.cursor()
+        else:
+            cur = self.conn.cursor()
         cur.execute(query, params)
         return cur.fetchone()
 
     def _fetchall(self, query: str, params=None, cursor_factory=None):
         if cursor_factory:
             cur = self.conn.cursor(cursor_factory = cursor_factory)
-            cur.execute(query, params)
-            return cur.fetchall()
-        cur = self.conn.cursor()
+        else:
+            cur = self.conn.cursor()
         cur.execute(query, params)
         return cur.fetchall()
 
@@ -327,7 +325,8 @@ class UserDbConn:
         cur = self.conn.cursor()
         cur.execute(query1, (user_id,))
         res = cur.fetchone()
-        if res is None: return None
+        if res is None:
+            return None
         c_id, issue_time = res
         query2 = '''
             SELECT problem_name, contest_id, p_index, rating_delta FROM challenge
@@ -336,7 +335,8 @@ class UserDbConn:
         cur.execute(query2, (c_id,))
         res = cur.fetchone()
         print(res)
-        if res is None: return None
+        if res is None:
+            return None
         return c_id, issue_time, res[0], res[1], res[2], res[3]
 
     def get_gudgitters(self):
@@ -631,7 +631,7 @@ class UserDbConn:
     def check_duel_challenge(self, userid):
         query = f'''
             SELECT id FROM duel
-            WHERE (challengee = %s OR challenger = %s) AND (status == {Duel.ONGOING} OR status == {Duel.PENDING});
+            WHERE (challengee = %s OR challenger = %s) AND (status = {Duel.ONGOING} OR status = {Duel.PENDING});
         '''
         cur = self.conn.cursor()
         cur.execute(query, (userid, userid))
@@ -640,7 +640,7 @@ class UserDbConn:
     def check_duel_accept(self, challengee):
         query = f'''
             SELECT id, challenger, problem_name FROM duel
-            WHERE challengee = %s AND status == {Duel.PENDING};
+            WHERE challengee = %s AND status = {Duel.PENDING};
         '''
         cur = self.conn.cursor()
         cur.execute(query, (challengee,))
@@ -649,7 +649,7 @@ class UserDbConn:
     def check_duel_decline(self, challengee):
         query = f'''
             SELECT id, challenger FROM duel
-            WHERE challengee = %s AND status == {Duel.PENDING};
+            WHERE challengee = %s AND status = {Duel.PENDING};
         '''
         cur = self.conn.cursor()
         cur.execute(query, (challengee,))
@@ -658,16 +658,17 @@ class UserDbConn:
     def check_duel_withdraw(self, challenger):
         query = f'''
             SELECT id, challengee FROM duel
-            WHERE challenger = %s AND status == {Duel.PENDING};
+            WHERE challenger = %s AND status = {Duel.PENDING};
         '''
         cur = self.conn.cursor()
         cur.execute(query, (challenger,))
-        return cur.execute(query, (challenger,)).fetchone()
+        cur.execute(query, (challenger,))
+        return cur.fetchone()
 
     def check_duel_draw(self, userid):
         query = f'''
             SELECT id, challenger, challengee, start_time, type FROM duel
-            WHERE (challenger = %s OR challengee = %s) AND status == {Duel.ONGOING};
+            WHERE (challenger = %s OR challengee = %s) AND status = {Duel.ONGOING};
         '''
         cur = self.conn.cursor()
         cur.execute(query, (userid, userid))
@@ -676,7 +677,7 @@ class UserDbConn:
     def check_duel_complete(self, userid):
         query = f'''
             SELECT id, challenger, challengee, start_time, problem_name, contest_id, p_index, type FROM duel
-            WHERE (challenger = %s OR challengee = %s) AND status == {Duel.ONGOING};
+            WHERE (challenger = %s OR challengee = %s) AND status = {Duel.ONGOING};
         '''
         cur = self.conn.cursor()
         cur.execute(query, (userid, userid))
@@ -763,7 +764,7 @@ class UserDbConn:
     def get_duel_wins(self, userid):
         query = f'''
             SELECT start_time, finish_time, problem_name, challenger, challengee FROM duel
-            WHERE ((challenger = %s AND winner == {Winner.CHALLENGER}) OR (challengee = %s AND winner == {Winner.CHALLENGEE})) AND status = {Duel.COMPLETE};
+            WHERE ((challenger = %s AND winner = {Winner.CHALLENGER}) OR (challengee = %s AND winner = {Winner.CHALLENGEE})) AND status = {Duel.COMPLETE};
         '''
         cur = self.conn.cursor()
         cur.execute(query, (userid, userid))
@@ -771,7 +772,7 @@ class UserDbConn:
 
     def get_duels(self, userid):
         query = f'''
-            SELECT id, start_time, finish_time, problem_name, challenger, challengee, winner FROM duel WHERE (challengee = %s OR challenger = %s) AND status == {Duel.COMPLETE} ORDER BY start_time DESC;
+            SELECT id, start_time, finish_time, problem_name, challenger, challengee, winner FROM duel WHERE (challengee = %s OR challenger = %s) AND status = {Duel.COMPLETE} ORDER BY start_time DESC;
         '''
         cur = self.conn.cursor()
         cur.execute(query, (userid, userid))
@@ -779,7 +780,7 @@ class UserDbConn:
 
     def get_duel_problem_names(self, userid):
         query = f'''
-            SELECT problem_name FROM duel WHERE (challengee = %s OR challenger = %s) AND (status == {Duel.COMPLETE} OR status == {Duel.INVALID});
+            SELECT problem_name FROM duel WHERE (challengee = %s OR challenger = %s) AND (status = {Duel.COMPLETE} OR status = {Duel.INVALID});
         '''
         cur = self.conn.cursor()
         cur.execute(query, (userid, userid))
@@ -788,7 +789,7 @@ class UserDbConn:
     def get_pair_duels(self, userid1, userid2):
         query = f'''
             SELECT id, start_time, finish_time, problem_name, challenger, challengee, winner FROM duel
-            WHERE ((challenger = %s AND challengee = %s) OR (challenger = %s AND challengee = %s)) AND status == {Duel.COMPLETE} ORDER BY start_time DESC;
+            WHERE ((challenger = %s AND challengee = %s) OR (challenger = %s AND challengee = %s)) AND status = {Duel.COMPLETE} ORDER BY start_time DESC;
         '''
         cur = self.conn.cursor()
         cur.execute(query, (userid1, userid2, userid2, userid1))
@@ -796,7 +797,7 @@ class UserDbConn:
 
     def get_recent_duels(self):
         query = f'''
-            SELECT id, start_time, finish_time, problem_name, challenger, challengee, winner FROM duel WHERE status == {Duel.COMPLETE} ORDER BY start_time DESC LIMIT 7;
+            SELECT id, start_time, finish_time, problem_name, challenger, challengee, winner FROM duel WHERE status = {Duel.COMPLETE} ORDER BY start_time DESC LIMIT 7;
         '''
         cur = self.conn.cursor()
         cur.execute(query)
@@ -805,7 +806,7 @@ class UserDbConn:
     def get_ongoing_duels(self):
         query = f'''
             SELECT start_time, problem_name, challenger, challengee FROM duel
-            WHERE status == {Duel.ONGOING} ORDER BY start_time DESC;
+            WHERE status = {Duel.ONGOING} ORDER BY start_time DESC;
         '''
         cur = self.conn.cursor()
         cur.execute(query)
@@ -813,7 +814,7 @@ class UserDbConn:
 
     def get_num_duel_completed(self, userid):
         query = f'''
-            SELECT COUNT(*) FROM duel WHERE (challengee = %s OR challenger = %s) AND status == {Duel.COMPLETE};
+            SELECT COUNT(*) FROM duel WHERE (challengee = %s OR challenger = %s) AND status = {Duel.COMPLETE};
         '''
         cur = self.conn.cursor()
         cur.execute(query, (userid, userid))
@@ -821,7 +822,7 @@ class UserDbConn:
 
     def get_num_duel_draws(self, userid):
         query = f'''
-            SELECT COUNT(*) FROM duel WHERE (challengee = %s OR challenger = %s) AND winner == {Winner.DRAW};
+            SELECT COUNT(*) FROM duel WHERE (challengee = %s OR challenger = %s) AND winner = {Winner.DRAW};
         '''
         cur = self.conn.cursor()
         cur.execute(query, (userid, userid))
@@ -830,7 +831,7 @@ class UserDbConn:
     def get_num_duel_losses(self, userid):
         query = f'''
             SELECT COUNT(*) FROM duel
-            WHERE ((challengee = %s AND winner == {Winner.CHALLENGER}) OR (challenger = %s AND winner == {Winner.CHALLENGEE})) AND status = {Duel.COMPLETE};
+            WHERE ((challengee = %s AND winner = {Winner.CHALLENGER}) OR (challenger = %s AND winner = {Winner.CHALLENGEE})) AND status = {Duel.COMPLETE};
         '''
         cur = self.conn.cursor()
         cur.execute(query, (userid, userid))
@@ -838,7 +839,7 @@ class UserDbConn:
 
     def get_num_duel_declined(self, userid):
         query = f'''
-            SELECT COUNT(*) FROM duel WHERE challengee = %s AND status == {Duel.DECLINED};
+            SELECT COUNT(*) FROM duel WHERE challengee = %s AND status = {Duel.DECLINED};
         '''
         cur = self.conn.cursor()
         cur.execute(query, (userid,))
@@ -846,7 +847,7 @@ class UserDbConn:
 
     def get_num_duel_rdeclined(self, userid):
         query = f'''
-            SELECT COUNT(*) FROM duel WHERE challenger = %s AND status == {Duel.DECLINED};
+            SELECT COUNT(*) FROM duel WHERE challenger = %s AND status = {Duel.DECLINED};
         '''
         cur = self.conn.cursor()
         cur.execute(query, (userid,))
@@ -870,8 +871,9 @@ class UserDbConn:
 
     def register_duelist(self, userid):
         query = '''
-            INSERT OR IGNORE INTO duelist (user_id, rating)
-            VALUES (%s, 1500);
+            INSERT INTO duelist (user_id, rating)
+            VALUES (%s, 1500)
+            ON CONFLICT DO NOTHING;
         '''
         with self.conn:
             cur = self.conn.cursor()
@@ -1002,8 +1004,8 @@ class UserDbConn:
                  'FROM rated_vcs '
                  'WHERE status = %s;'
                  )
-        vcs = self._fetchall(query, params=(RatedVC.ONGOING,), cursor_factory=psycopg2.extras.NamedTupleCursor)
-        vc_ids = [vc.id for vc in vcs]
+        vcs = self._fetchall(query, params=(RatedVC.ONGOING,))
+        vc_ids = [vc[0] for vc in vcs]
         return vc_ids
 
     def get_rated_vc_user_ids(self, vc_id: int):
@@ -1011,8 +1013,8 @@ class UserDbConn:
                  'FROM rated_vc_users '
                  'WHERE vc_id = %s;'
                  )
-        users = self._fetchall(query, params=(vc_id,), cursor_factory=psycopg2.extras.NamedTupleCursor)
-        user_ids = [user.user_id for user in users]
+        users = self._fetchall(query, params=(vc_id,))
+        user_ids = [user[0] for user in users]
         return user_ids
 
     def finish_rated_vc(self, vc_id: int):
@@ -1041,12 +1043,12 @@ class UserDbConn:
                  'FROM rated_vc_users '
                  'WHERE user_id = CAST(%s AS TEXT) AND rating IS NOT NULL;'
                  )
-        rating = self._fetchone(query, params=(user_id, ), cursor_factory=psycopg2.extras.NamedTupleCursor).rating
+        rating = self._fetchone(query, params=(user_id, ))
         if rating is None:
             if default_if_not_exist:
                 return _DEFAULT_VC_RATING
             return None
-        return rating
+        return rating[1]
 
     def get_vc_rating_history(self, user_id: str):
         """ Return [vc_id, rating].
@@ -1055,7 +1057,7 @@ class UserDbConn:
                  'FROM rated_vc_users '
                  'WHERE user_id = CAST(%s AS TEXT) AND rating IS NOT NULL;'
                  )
-        ratings = self._fetchall(query, params=(user_id,), cursor_factory=psycopg2.extras.NamedTupleCursor)
+        ratings = self._fetchall(query, params=(user_id,))
         return ratings
 
     def set_rated_vc_channel(self, guild_id, channel_id):
@@ -1074,7 +1076,7 @@ class UserDbConn:
                  'FROM rated_vc_settings '
                  'WHERE guild_id = CAST(%s AS TEXT);')
         cur = self.conn.cursor()
-        cur.execute(query, (guild_id,)).fetchone()
+        cur.execute(query, (guild_id,))
         channel_id = cur.fetchone()
         return int(channel_id[0]) if channel_id else None
 
@@ -1083,7 +1085,10 @@ class UserDbConn:
                  'FROM rated_vc_users '
                  'WHERE user_id = CAST(%s AS TEXT);'
                  )
-        vc_id = self._fetchone(query, params=(user_id, ), cursor_factory=psycopg2.extras.NamedTupleCursor).vc_id
+        vc_id = self._fetchone(query, params=(user_id, ))
+        if vc_id is None:
+            return 0
+        vc_id = vc_id[0]
         query = ('DELETE FROM rated_vc_users '
                  'WHERE user_id = CAST(%s AS TEXT) AND vc_id = %s;')
         with self.conn:
