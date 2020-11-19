@@ -64,7 +64,7 @@ def main():
 
     bot = commands.Bot(command_prefix=commands.when_mentioned_or(';'), intents=intents)
     cogs = [file.stem for file in Path('tle', 'cogs').glob('*.py')]
-    disallowed_cogs = ['starboard', 'cses']
+    disallowed_cogs = ['cses']
     for extension in cogs:
         if extension not in disallowed_cogs:
             bot.load_extension(f'tle.cogs.{extension}')
