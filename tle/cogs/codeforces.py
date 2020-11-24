@@ -308,11 +308,19 @@ class Codeforces(commands.Cog):
         embed = discord_common.cf_color_embed(description=msg)
         await ctx.send(f'Mashup contest for `{str_handles}`', embed=embed)
 
-    @commands.command(brief='Create a (good) mashup', usage='name count lower:upper [handles] [+tags] [>=cutoff]')
-    async def bestlist(self, ctx, name: str, cnt: int, *args):
+    @commands.command(brief='Create a (good) mashup', usage='name lower:upper [handles] [+tags]')
+    async def bestlist(self, ctx, name: str, *args):
         """Create a mashup contest using problems with maximum solved by list members.
         """
-        handles = [arg for arg in args if arg[0] != '+' and arg[:2] != ">=" and ":" not in arg]
+
+        def make_page(chunk, title):
+            nonlocal count
+            desc = '\n'.join(f'[{p.name}]({p.url}) [{p.rating}] {count[_get_problem_id(p)]}x'
+                             for i, p in enumerate(chunk))
+            embed = discord_common.cf_color_embed(description=desc)
+            return title, embed
+
+        handles = [arg for arg in args if arg[0] != '+' and ":" not in arg]
         tags = [arg[1:] for arg in args if arg[0] == '+' and len(arg) > 1]
 
         req = [arg for arg in args if ":" in arg]
@@ -321,16 +329,13 @@ class Codeforces(commands.Cog):
         lower = int(lower) if lower else 0
         upper = int(upper) if upper else 9999
 
-        cutoff = [arg for arg in args if arg[:2] == ">="]
-        cutoff = int(cutoff[0][2:]) if cutoff else 0
-
-        count = _get_list_count(name, cutoff)
+        count = _get_list_count(name, 0)
         handles = handles or ('!' + str(ctx.author),)
         handles = await cf_common.resolve_handles(ctx, self.converter, handles)
+
         resp = [await cf.user.status(handle=handle) for handle in handles]
         submissions = [sub for user in resp for sub in user]
         solved = {sub.problem.name for sub in submissions}
-        info = await cf.user.info(handles=handles)
         problems = [prob for prob in cf_common.cache2.problem_cache.problems
                     if lower <= prob.rating <= upper and prob.name not in solved
                     and not any(cf_common.is_contest_writer(prob.contestId, handle) for handle in handles)
@@ -338,16 +343,12 @@ class Codeforces(commands.Cog):
                     and _get_problem_id(prob) in count.keys()]
         if tags:
             problems = [prob for prob in problems if prob.tag_matches(tags)]
-
-        cnt = min(cnt, len(problems), 20)
-        await ctx.send(f"Found {len(problems)} valid problem")
         problems.sort(key=lambda problem: count[_get_problem_id(problem)])
         problems.reverse()
-        problems = problems[:cnt]
-        msg = '\n'.join(f'{i + 1}: [{p.name}]({p.url}) [{p.rating}] {count[_get_problem_id(p)]}x' for i, p in enumerate(problems))
-        str_handles = '`, `'.join(handles)
-        embed = discord_common.cf_color_embed(description=msg)
-        await ctx.send(f'Mashup contest for `{str_handles}`', embed=embed)
+
+        title = f"Found {len(problems)} valid problem for `{'`, `'.join(handles)}`"
+        pages = [make_page(chunk, title) for chunk in paginator.chunkify(problems, 20)]
+        paginator.paginate(self.bot, ctx.channel, pages, wait_time=5 * 60, set_pagenum_footers=True)
 
     @commands.command(brief='Challenge')
     @cf_common.user_guard(group='gitgud')
