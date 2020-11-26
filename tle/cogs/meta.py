@@ -9,6 +9,7 @@ from discord.ext import commands
 from tle import constants
 from tle.util.codeforces_common import pretty_time_format
 from tle.util import codeforces_common as cf_common
+from tle.util import tasks
 
 RESTART = 42
 
@@ -110,6 +111,12 @@ class Meta(commands.Cog):
         """Reconnect bot to database (only use if necessary when commands stop working)"""
         cf_common.user_db.reconnect()
         await ctx.send('Reconnected to database.')
+
+    @tasks.task_spec(name='RollbackDatabase',
+                     waiter=tasks.Waiter.fixed_delay(3 * 60))
+    async def _rollback_database(self, _):
+        cf_common.user_db.rollback()
+
 
 def setup(bot):
     bot.add_cog(Meta(bot))
