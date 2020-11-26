@@ -176,6 +176,17 @@ class Codeforces(commands.Cog):
 
         await ctx.send(pb_link)
 
+    @commands.command(brief='Check status for a problem',
+                      usage='problemid')
+    async def check(self, ctx, idx: str):
+        match = re.match(r"^(\d+)([a-zA-Z]\d?)$", idx)
+        if not match:
+            raise CodeforcesCogError('Problem not found')
+        contest, problem = match.groups()
+        pb_link = f"https://codeforces.com/problemset/status/{contest}/problem/{problem}?list" \
+                  f"=f53e67ca4a5f784f27d39a4aea8dfd19 "
+        await ctx.send(pb_link)
+
     @commands.command(brief='Recommend a (good) problem',
                       usage='name [tags...] [rating] [>=cutoff]')
     @cf_common.user_guard(group='gitgud')
