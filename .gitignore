@@ -114,4 +114,8 @@ pip-wheel-metadata/
 # logs
 /logs
 
+# hoi
 myrun.sh
+environment
+*.zip
+/data/assets/fonts
