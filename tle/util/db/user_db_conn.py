@@ -1040,23 +1040,20 @@ class UserDbConn:
             cur.execute(query, (vc_id, user_id, rating))
 
     def get_vc_rating(self, user_id: str, default_if_not_exist: bool = True):
-        query = ('SELECT MAX(vc_id) AS latest_vc_id, rating '
-                 'FROM rated_vc_users '
-                 'WHERE user_id = CAST(%s AS TEXT) AND rating IS NOT NULL;'
-                 )
-        rating = self._fetchone(query, params=(user_id, ))
-        if rating is None:
+        result = self.get_vc_rating_history(user_id)
+        if not result:
             if default_if_not_exist:
                 return _DEFAULT_VC_RATING
             return None
-        return rating[1]
+        return result[-1][1]
 
     def get_vc_rating_history(self, user_id: str):
         """ Return [vc_id, rating].
         """
         query = ('SELECT vc_id, rating '
                  'FROM rated_vc_users '
-                 'WHERE user_id = CAST(%s AS TEXT) AND rating IS NOT NULL;'
+                 'WHERE user_id = CAST(%s AS TEXT) AND rating IS NOT NULL '
+                 'ORDER BY vc_id ASC;'
                  )
         ratings = self._fetchall(query, params=(user_id,))
         return ratings
