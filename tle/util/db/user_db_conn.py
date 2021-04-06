@@ -421,8 +421,8 @@ class UserDbConn:
     def cache_cf_user(self, user):
         query = ('INSERT INTO cf_user_cache '
                  '(handle, first_name, last_name, country, city, organization, contribution, '
-                 '    rating, last_online_time, registration_time, friend_of_count, title_photo) '
-                 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) '
+                 ' rating, maxRating, last_online_time, registration_time, friend_of_count, title_photo) '
+                 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) '
                  'ON CONFLICT (handle) '
                  'DO UPDATE SET '
                  'first_name = EXCLUDED.first_name,'
@@ -432,6 +432,7 @@ class UserDbConn:
                  'organization = EXCLUDED.organization,'
                  'contribution = EXCLUDED.contribution,'
                  'rating = EXCLUDED.rating,'
+                 'maxRating = EXCLUDED.maxRating,'
                  'last_online_time = EXCLUDED.last_online_time,'
                  'registration_time = EXCLUDED.registration_time,'
                  'friend_of_count = EXCLUDED.friend_of_count,'
