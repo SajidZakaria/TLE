@@ -1,6 +1,6 @@
 # TLE (+ Heroku)
 
-This repository helps to run tle directly in the heroku. For more information about TLE, cheak the [main repository](https://github.com/cheran-senthil/TLE).
+This repository helps to run tle directly in the heroku. For more information about TLE, check the [main repository](https://github.com/cheran-senthil/TLE).
 
 ---
 
@@ -28,3 +28,16 @@ This repository helps to run tle directly in the heroku. For more information ab
 19. After successful build open the heroku app in your browser. The same step as 10.
 20. Go to Resources tab and turn on the worker. You are not charged for doing this its completely free.
 21. That's it Enjoy!
+
+## Troubleshoot
+
+### Error R14 (Memory quota exceeded)
+
+Error R14 doesn't stop dynos. According to [this heroku article](https://devcenter.heroku.com/articles/error-codes#r14-memory-quota-exceeded),
+if this error occurs, the dyno will page to swap space to continue running, which may cause degraded process performance.
+
+### psycopg2.errors.InFailedSqlTransaction
+
+By using `;meta rollback` or `;meta reconnect`, the error should be fixed and other commands will run normally.
+
+This error causes from [user database](tle/util/db/user_db_conn.py). Feel free to pull request if you can fix this.
