@@ -124,7 +124,7 @@ class HOI(commands.Cog):
             embed.add_field(name='Matched tags', value=tagslist)
         await ctx.send(f'Recommended problem for `{handle}`', embed=embed)
 
-    @hoi.command(brief='Create a (good) mashup', usage='name lower:upper [handles] [+tags]')
+    @hoi.command(brief='Create a (good) mashup', usage='name [lower:upper] [handles] [+tags]')
     async def bestlist(self, ctx, name: str, *args):
         """Create a mashup contest using problems with maximum solved by list members."""
 
@@ -138,13 +138,13 @@ class HOI(commands.Cog):
         handles = [arg for arg in args if arg[0] != '+' and ":" not in arg]
         tags = [arg[1:] for arg in args if arg[0] == '+' and len(arg) > 1]
 
-        req = [arg for arg in args if ":" in arg]
-        if not req:
-            raise HOICogError('No argument lower:upper')
-        if len(req) > 1:
+        rate_range = [arg for arg in args if ":" in arg]
+        if len(rate_range) > 1:
             raise HOICogError('More than one lower:upper')
+        if not rate_range:
+            rate_range = [':']
 
-        lower, upper = req[0].split(":")
+        lower, upper = rate_range[0].split(":")
         lower = int(lower) if lower else 0
         upper = int(upper) if upper else 9999
 
@@ -168,6 +168,10 @@ class HOI(commands.Cog):
         title = f"Found {len(problems)} valid problem for `{'`, `'.join(handles)}`"
         pages = [make_page(chunk, title) for chunk in paginator.chunkify(problems, 20)]
         paginator.paginate(self.bot, ctx.channel, pages, wait_time=5 * 60, set_pagenum_footers=True)
+
+    @discord_common.send_error_if(HOICogError, cf_common.ResolveHandleError, cf_common.FilterError)
+    async def cog_command_error(self, ctx, error):
+        pass
 
 
 def setup(bot):
