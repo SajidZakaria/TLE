@@ -124,7 +124,7 @@ class HOI(commands.Cog):
             embed.add_field(name='Matched tags', value=tagslist)
         await ctx.send(f'Recommended problem for `{handle}`', embed=embed)
 
-    @hoi.command(brief='Create a (good) mashup', usage='name [lower:upper] [handles] [+tags]')
+    @hoi.command(brief='Create a (good) mashup', usage='name [lower:upper] [handles] [+tags] [~tags]')
     async def bestlist(self, ctx, name: str, *args):
         """Create a mashup contest using problems with maximum solved by list members."""
 
@@ -135,8 +135,9 @@ class HOI(commands.Cog):
             embed = discord_common.cf_color_embed(description=desc)
             return title, embed
 
-        handles = [arg for arg in args if arg[0] != '+' and ":" not in arg]
+        handles = [arg for arg in args if arg[0] != '+' and arg[0] != '~' and ":" not in arg]
         tags = [arg[1:] for arg in args if arg[0] == '+' and len(arg) > 1]
+        not_tags = [arg[1:] for arg in args if arg[0] == '~' and len(arg) > 1]
 
         rate_range = [arg for arg in args if ":" in arg]
         if len(rate_range) > 1:
@@ -162,6 +163,9 @@ class HOI(commands.Cog):
                     and priority.has(prob)]
         if tags:
             problems = [prob for prob in problems if prob.tag_matches(tags)]
+        if not_tags:
+            problems = [prob for prob in problems if not any(prob.tag_matches([tag]) for tag in not_tags)]
+
         problems.sort(key=priority.cnt)
         problems.reverse()
 
