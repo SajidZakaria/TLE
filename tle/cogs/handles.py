@@ -365,6 +365,8 @@ class Handles(commands.Cog):
         # CF API returns correct handle ignoring case, update to it
         user, = await cf.user.info(handles=[handle])
         await self._set(ctx, member, user)
+        embed = _make_profile_embed(member, user, mode='set')
+        await ctx.send(embed=embed)
 
     async def _set(self, ctx, member, user):
         handle = user.handle
@@ -383,8 +385,6 @@ class Handles(commands.Cog):
             role_to_assign = roles[0]
         await self.update_member_rank_role(member, role_to_assign,
                                            reason='New handle set for user')
-        embed = _make_profile_embed(member, user, mode='set')
-        await ctx.send(embed=embed)
 
     @handle.command(brief='Identify yourself', usage='[handle]')
     @cf_common.user_guard(group='handle',
@@ -414,6 +414,8 @@ class Handles(commands.Cog):
         if any(sub.problem.name == problem.name and sub.verdict == 'COMPILATION_ERROR' for sub in subs):
             user, = await cf.user.info(handles=[handle])
             await self._set(ctx, ctx.author, user)
+            embed = _make_profile_embed(ctx.author, user, mode='set')
+            await ctx.send(embed=embed)
         else:
             await ctx.send(f'Sorry `{invoker}`, can you try again?')
 
