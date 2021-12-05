@@ -297,7 +297,7 @@ class Handles(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        rc = cf_common.user_db.update_status(member.guild.id, [member.id])
+        rc = cf_common.user_db.update_status([member.id])
         if rc == 1:
             handle = cf_common.user_db.get_handle(member.id, member.guild.id)
             await self._update_ranks(member.guild, [(int(member.id), handle)])
@@ -385,8 +385,6 @@ class Handles(commands.Cog):
             role_to_assign = roles[0]
         await self.update_member_rank_role(member, role_to_assign,
                                            reason='New handle set for user')
-        embed = _make_profile_embed(member, user, mode='set')
-        await ctx.send(embed=embed)
 
     @handle.command(brief='Identify yourself', usage='[handle]')
     @cf_common.user_guard(group='handle',
