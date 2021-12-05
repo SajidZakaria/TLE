@@ -297,7 +297,7 @@ class Handles(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        rc = cf_common.user_db.update_status(member.guild.id, [member.id])
+        rc = cf_common.user_db.update_status([member.id])
         if rc == 1:
             handle = cf_common.user_db.get_handle(member.id, member.guild.id)
             await self._update_ranks(member.guild, [(int(member.id), handle)])
