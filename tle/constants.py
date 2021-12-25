@@ -9,7 +9,7 @@ MISC_DIR = os.path.join(DATA_DIR, 'misc')
 TEMP_DIR = os.path.join(DATA_DIR, 'temp')
 
 DATABASE_URL = os.environ['DATABASE_URL']
-CACHE_DB_FILE_PATH = os.path.join(DB_DIR, 'cache.db')
+CACHE_DB_FILE_PATH = os.environ['HEROKU_POSTGRESQL_BLUE_URL']
 
 FONTS_DIR = os.path.join(ASSETS_DIR, 'fonts')
 
