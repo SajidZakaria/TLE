@@ -101,10 +101,6 @@ class CacheControl(commands.Cog):
         if too_long:
             await ctx.send('Check logs for full stack trace')
 
-    @tasks.loop(hours=128)
-    async def update_db(self):
-        cf_common.cache2.rating_changes_cache._reset_rc()
-
 
 def setup(bot):
     bot.add_cog(CacheControl(bot))
