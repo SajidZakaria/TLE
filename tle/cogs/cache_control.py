@@ -88,6 +88,14 @@ class CacheControl(commands.Cog):
             count = await cf_common.cache2.problemset_cache.update_for_contest(contest_id)
         await ctx.send(f'Done, fetched {count} problems')
 
+    @cache.command()
+    @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)
+    @timed_command
+    async def truncate(self, ctx):
+        """ Truncate rating changes """
+        cf_common.cache2.rating_changes_cache._reset_rc()
+        await ctx.send(f"Done")
+
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.CommandInvokeError):
             error = error.__cause__
