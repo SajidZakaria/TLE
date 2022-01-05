@@ -52,7 +52,7 @@ class CacheDbConn:
             'rating_update_time   INTEGER,'
             'old_rating           INTEGER,'
             'new_rating           INTEGER,'
-            'UNIQUE (contest_id, handle)'
+            'UNIQUE (contest_id)'
             ');'
         )
         self.conn.execute('CREATE INDEX IF NOT EXISTS ix_rating_change_contest_id '
