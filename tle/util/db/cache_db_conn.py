@@ -84,16 +84,16 @@ class CacheDbConn:
     def cache_contests(self, contests):
         self.conn = self.connection.cursor()
         query = '''
-            INSERT INTO contest 
+            INSERT INTO contest
                 (id, name, start_time, duration, type, phase, prepared_by)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (id) DO UPDATE SET
-                id = EXCLUDED.id, 
-                name = EXCLUDED.name, 
-                start_time = EXCLUDED.start_time, 
-                duration = EXCLUDED.duration, 
-                type = EXCLUDED.type, 
-                phase = EXCLUDED.phase, 
+                id = EXCLUDED.id,
+                name = EXCLUDED.name,
+                start_time = EXCLUDED.start_time,
+                duration = EXCLUDED.duration,
+                type = EXCLUDED.type,
+                phase = EXCLUDED.phase,
                 prepared_by = EXCLUDED.prepared_by;
         '''
 
@@ -125,13 +125,13 @@ class CacheDbConn:
                 (contest_id, problemset_name, txtIndex, name, type, points, rating, tags)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (name) DO UPDATE SET
-                contest_id = EXCLUDED.contest_id, 
-                problemset_name = EXCLUDED.problemset_name, 
-                txtIndex = EXCLUDED.txtIndex, 
-                name = EXCLUDED.name, 
-                type = EXCLUDED.type, 
-                points = EXCLUDED.points, 
-                rating = EXCLUDED.rating, 
+                contest_id = EXCLUDED.contest_id,
+                problemset_name = EXCLUDED.problemset_name,
+                txtIndex = EXCLUDED.txtIndex,
+                name = EXCLUDED.name,
+                type = EXCLUDED.type,
+                points = EXCLUDED.points,
+                rating = EXCLUDED.rating,
                 tags = EXCLUDED.tags;
         '''
         self.conn.executemany(query, list(map(self._squish_tags, problems)))
@@ -166,7 +166,7 @@ class CacheDbConn:
             INSERT INTO rating_change
                 (contest_id, handle, rank, rating_update_time, old_rating, new_rating)
             VALUES (%s, %s, %s, %s, %s, %s)
-            ON CONFLICT (contest_id, handle) DO UPDATE SET
+            ON CONFLICT (contest_id) DO UPDATE SET
                 contest_id = EXCLUDED.contest_id,
                 handle = EXCLUDED.handle,
                 rank = EXCLUDED.rank,
@@ -183,7 +183,7 @@ class CacheDbConn:
 
     def clear_rating_changes(self, contest_id=None):
         self.conn = self.connection.cursor()
-        
+
         if contest_id is None:
             query = 'DELETE FROM rating_change'
             self.conn.execute(query)
@@ -195,7 +195,7 @@ class CacheDbConn:
 
     def get_users_with_more_than_n_contests(self, time_cutoff, n):
         self.conn = self.connection.cursor()
-        
+
         query = ('SELECT handle, COUNT(*) AS num_contests '
                  'FROM rating_change GROUP BY handle HAVING num_contests >= %s '
                  'AND MAX(rating_update_time) >= %s')
@@ -206,7 +206,7 @@ class CacheDbConn:
 
     def get_all_rating_changes(self):
         self.conn = self.connection.cursor()
-        
+
         query = ('SELECT contest_id, name, handle, rank, rating_update_time, old_rating, new_rating '
                  'FROM rating_change r '
                  'LEFT JOIN contest c '
@@ -219,7 +219,7 @@ class CacheDbConn:
 
     def get_rating_changes_for_contest(self, contest_id):
         self.conn = self.connection.cursor()
-        
+
         query = ('SELECT contest_id, name, handle, rank, rating_update_time, old_rating, new_rating '
                  'FROM rating_change r '
                  'LEFT JOIN contest c '
@@ -242,7 +242,7 @@ class CacheDbConn:
 
     def get_rating_changes_for_handle(self, handle):
         self.conn = self.connection.cursor()
-        
+
         query = ('SELECT contest_id, name, handle, rank, rating_update_time, old_rating, new_rating '
                  'FROM rating_change r '
                  'LEFT JOIN contest c '
@@ -261,13 +261,13 @@ class CacheDbConn:
                 (contest_id, problemset_name, txtIndex, name, type, points, rating, tags)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (contest_id, txtIndex) DO UPDATE SET
-                contest_id = EXCLUDED.contest_id, 
-                problemset_name = EXCLUDED.problemset_name, 
-                txtIndex = EXCLUDED.txtIndex, 
-                name = EXCLUDED.name, 
-                type = EXCLUDED.type, 
-                points = EXCLUDED.points, 
-                rating = EXCLUDED.rating, 
+                contest_id = EXCLUDED.contest_id,
+                problemset_name = EXCLUDED.problemset_name,
+                txtIndex = EXCLUDED.txtIndex,
+                name = EXCLUDED.name,
+                type = EXCLUDED.type,
+                points = EXCLUDED.points,
+                rating = EXCLUDED.rating,
                 tags = EXCLUDED.tags;
         '''
 
@@ -279,7 +279,7 @@ class CacheDbConn:
 
     def fetch_problems2(self):
         self.conn = self.connection.cursor()
-        
+
         query = ('SELECT contest_id, problemset_name, txtIndex, name, type, points, rating, tags '
                  'FROM problem2 ')
         self.conn.execute(query)
@@ -289,7 +289,7 @@ class CacheDbConn:
 
     def clear_problemset(self, contest_id=None):
         self.conn = self.connection.cursor()
-        
+
         if contest_id is None:
             query = 'DELETE FROM problem2'
             self.conn.execute(query)
@@ -300,7 +300,7 @@ class CacheDbConn:
 
     def fetch_problemset(self, contest_id):
         self.conn = self.connection.cursor()
-        
+
         query = ('SELECT contest_id, problemset_name, txtIndex, name, type, points, rating, tags '
                  'FROM problem2 '
                  'WHERE contest_id = %s')
@@ -311,7 +311,7 @@ class CacheDbConn:
 
     def problemset_empty(self):
         self.conn = self.connection.cursor()
-        
+
         query = 'SELECT 1 FROM problem2'
         self.conn.execute(query)
         res = self.conn.fetchone()
