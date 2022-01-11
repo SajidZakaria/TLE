@@ -18,16 +18,17 @@ This repository helps to run tle directly in the heroku. For more information ab
     > **Note**: the order of adding the buildpacks is important.
 10. Now go to the personal dashboard [page](https://dashboard.heroku.com/apps) of heroku on your browser.
 11. Next click on the app you created in step 6.
-12. Now, go to resources and click on **Find more add-ons** and find **Heroku Postgres**. 
+12. Now, go to resources and click on **Find more add-ons** and find **Heroku Postgres**.
 13. Click to install the database on the Hobby Dev plan and set the app to the one that hosts the bot.
 14. Go to settings tab and you will see a section called **Config Vars**. Click on the **reveal config vars** button.
 15. Now you need to create a config var called `BOT_TOKEN` and paste your bot token created using discord and hit add.
-16. Make sure that the name of the config var that contains the database url is named `DATABASE_URL`.  
-17. Now you are almost done. Type the following command `git push heroku hoi:master -f` and press enter.
-18. It will take few minutes to build and deploy
-19. After successful build open the heroku app in your browser. The same step as 10.
-20. Go to Resources tab and turn on the worker. You are not charged for doing this its completely free.
-21. That's it Enjoy!
+16. Make sure that the name of the config var that contains the database url is named `DATABASE_URL`.
+17. Follow Step 10-16 again, but this time make sure the there is another config variable named `HEROKU_POSTGRESQL_BLUE_URL`. So basically, create another database and make sure it's added to the config vars.
+18. Now you are almost done. Type the following command `git push heroku hoi:master -f` and press enter.
+19. It will take few minutes to build and deploy
+20. After successful build open the heroku app in your browser. The same step as 10.
+21. Go to Resources tab and turn on the worker. You are not charged for doing this its completely free.
+22. That's it Enjoy!
 
 ## Troubleshoot
 
