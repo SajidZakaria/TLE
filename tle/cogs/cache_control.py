@@ -26,10 +26,6 @@ class CacheControl(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.update_db.start()
-
     @commands.group(brief='Commands to force reload of cache',
                     invoke_without_command=True)
     @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)
